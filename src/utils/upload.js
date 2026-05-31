@@ -1,26 +1,19 @@
+import { uploadAPI } from '../api'
 import { ElMessage } from 'element-plus'
 
 /**
- * 上传图片并返回可访问 URL（本地 mock 模式）
+ * 上传图片并返回可访问 URL
  * @param {File} file
  * @param {'product'|'avatar'} type
  * @returns {Promise<string>}
  */
 export async function uploadImageFile(file, type = 'product') {
-  // const res = await uploadAPI.uploadImage(file, type)
-  // const url = res?.data?.url
-  // if (!url) {
-  //   throw new Error(res?.message || '上传失败')
-  // }
-  // return url
-
-  // 本地 mock: 使用 URL.createObjectURL
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const url = URL.createObjectURL(file)
-      resolve(url)
-    }, 500)
-  })
+  const res = await uploadAPI.uploadImage(file, type)
+  const url = res?.data?.url
+  if (!url) {
+    throw new Error(res?.message || '上传失败')
+  }
+  return url
 }
 
 /**

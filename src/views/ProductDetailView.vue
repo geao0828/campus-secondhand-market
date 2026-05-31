@@ -10,9 +10,9 @@
       <el-col :xs="24" :md="10">
         <el-card :body-style="{ padding: 0 }">
           <el-image :src="currentImage" fit="cover" class="main-image" />
-          <div v-if="product.images?.length > 1" class="thumb-list">
+          <div v-if="productImages.length > 1" class="thumb-list">
             <img
-              v-for="(img, i) in product.images"
+              v-for="(img, i) in productImages"
               :key="i"
               :src="img"
               :class="{ active: currentImage === img }"
@@ -36,11 +36,17 @@
             <el-descriptions-item label="发布时间">{{ product.publishTime }}</el-descriptions-item>
             <el-descriptions-item label="库存">{{ product.stock }} 件</el-descriptions-item>
           </el-descriptions>
-          <div class="buy-row">
+          <div class="buy-row" v-if="!isOwnProduct">
             <span>数量</span>
-            <el-input-number v-model="quantity" :min="1" :max="product.stock" />
+            <el-input-number v-model="quantity" :min="1" :max="product.stock || 1" />
           </div>
-          <div class="actions">
+          <div class="actions" v-if="isOwnProduct">
+            <el-tag type="info">这是您发布的商品，不能购买</el-tag>
+            <el-button size="large" :icon="Star" :type="isFavorite ? 'warning' : 'default'" @click="handleFavorite">
+              {{ isFavorite ? '已收藏' : '收藏' }}
+            </el-button>
+          </div>
+          <div class="actions" v-else>
             <el-button type="danger" size="large" @click="handleBuyNow">立即购买</el-button>
             <el-button type="primary" size="large" :icon="ShoppingCart" @click="handleAddToCart">加入购物车</el-button>
             <el-button size="large" :icon="Star" :type="isFavorite ? 'warning' : 'default'" @click="handleFavorite">
@@ -63,7 +69,7 @@
           <template #header>用户评价 ({{ reviews.length }})</template>
           <div v-for="review in reviews" :key="review.id" class="review-item">
             <div class="review-head">
-              <el-avatar :size="36">{{ review.userName[0] }}</el-avatar>
+              <el-avatar :size="36">{{ review.userName?.[0] || 'U' }}</el-avatar>
               <div>
                 <strong>{{ review.userName }}</strong>
                 <el-rate :model-value="review.rating" disabled size="small" />
@@ -80,7 +86,9 @@
           <template #header>卖家信息</template>
           <div class="seller">
             <div class="seller-avatar">
-              <el-avatar :size="56">{{ product.seller?.name?.[0] || 'S' }}</el-avatar>
+              <el-avatar :size="56" :src="product.seller?.avatar">
+                {{ product.seller?.name?.[0] || 'S' }}
+              </el-avatar>
               <strong class="seller-name">{{ product.seller?.name }}</strong>
             </div>
             <p>已售 {{ product.seller?.soldCount }} 件 · 评分 {{ product.seller?.rating }}</p>
@@ -96,11 +104,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProductStore } from '../stores/product'
 import { useUserStore } from '../stores/user'
 import { useOrderStore } from '../stores/order'
+import { productAPI } from '../api'
 
 import { ShoppingCart, Star, ChatDotRound } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -111,12 +120,45 @@ const productStore = useProductStore()
 const userStore = useUserStore()
 const orderStore = useOrderStore()
 
+onMounted(async () => {
+  productStore.fetchProducts()
+  productStore.fetchReviews(route.params.id)
+  try {
+    const res = await productAPI.getProductDetail(route.params.id)
+    if (res?.data) {
+      const existing = productStore.getProductById(route.params.id)
+      if (!existing) {
+        productStore.products.unshift(res.data)
+      }
+    }
+  } catch (e) {
+    console.error('获取商品详情失败:', e)
+  }
+})
+
 const quantity = ref(1)
 const currentImage = ref('')
 
 const product = computed(() => productStore.getProductById(route.params.id))
 const reviews = computed(() => productStore.getReviewsByProductId(route.params.id))
+const productImages = computed(() => {
+  if (!product.value?.images) return []
+  const images = product.value.images
+  if (Array.isArray(images)) return images
+  if (typeof images === 'string') {
+    try {
+      return JSON.parse(images)
+    } catch {
+      return []
+    }
+  }
+  return []
+})
 const isFavorite = computed(() => product.value && userStore.isFavorite(product.value.id))
+const isOwnProduct = computed(() => {
+  if (!product.value?.seller?.id || !userStore.user?.id) return false
+  return product.value.seller.id === userStore.user.id
+})
 const categoryName = computed(() =>
   productStore.categories.find((c) => c.id === product.value?.category)?.name || ''
 )
@@ -128,7 +170,9 @@ const discount = computed(() => {
 watch(
   product,
   (p) => {
-    if (p) currentImage.value = p.images?.[0] || p.image
+    if (p) {
+      currentImage.value = productImages.value[0] || p.image || p.imgUrl || 'https://picsum.photos/600/600?random=product'
+    }
   },
   { immediate: true }
 )

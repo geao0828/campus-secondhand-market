@@ -74,6 +74,7 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProductStore } from '../stores/product'
 import ProductCard from '../components/ProductCard.vue'
@@ -81,6 +82,11 @@ import { TrendCharts, Clock, ArrowRight, Sell, List, User } from '@element-plus/
 
 const router = useRouter()
 const productStore = useProductStore()
+
+onMounted(() => {
+  productStore.fetchHotProducts()
+  productStore.fetchNewProducts()
+})
 </script>
 
 <style scoped>

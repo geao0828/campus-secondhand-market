@@ -71,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useOrderStore } from '../stores/order'
 import { useProductStore } from '../stores/product'
 import { useUserStore } from '../stores/user'
@@ -81,6 +81,10 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const orderStore = useOrderStore()
 const productStore = useProductStore()
 const userStore = useUserStore()
+
+onMounted(() => {
+  orderStore.fetchOrders()
+})
 
 const activeTab = ref('all')
 const showReview = ref(false)

@@ -72,7 +72,7 @@ const form = reactive({
   image: ''
 })
 
-const handleSubmit = (data) => {
+const handleSubmit = async (data) => {
   const payload = {
     ...data,
     seller: {
@@ -85,22 +85,25 @@ const handleSubmit = (data) => {
   }
 
   if (editingId.value) {
-    orderStore.updateMyProduct(editingId.value, payload)
-    productStore.updateProduct(editingId.value, payload)
+    await orderStore.updateMyProduct(editingId.value, payload)
+    await productStore.updateProduct(editingId.value, payload)
     ElMessage.success('修改成功')
   } else {
-    const created = productStore.addProduct(payload)
-    orderStore.addMyProduct({
-      id: created.id,
-      name: created.name,
-      price: created.price,
-      category: created.category,
-      condition: created.condition,
-      description: created.description,
-      image: created.image,
-      stock: created.stock
-    })
-    ElMessage.success('发布成功')
+    const res = await productStore.addProduct(payload)
+    const created = res?.data
+    if (created) {
+      orderStore.addMyProduct({
+        id: created.id,
+        name: created.name,
+        price: created.price,
+        category: created.category,
+        condition: created.condition,
+        description: created.description,
+        image: created.image,
+        stock: created.stock
+      })
+      ElMessage.success('发布成功')
+    }
   }
   handleReset()
 }

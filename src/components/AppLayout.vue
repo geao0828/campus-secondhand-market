@@ -38,6 +38,7 @@
           <el-avatar
             v-if="userStore.isLoggedIn"
             :size="36"
+            :src="userStore.user?.avatar"
             @click="router.push('/profile')"
             style="cursor: pointer"
           >
@@ -149,18 +150,21 @@ const handleSearch = () => {
   })
 }
 
-const handleLogin = () => {
-  userStore.login({
-    id: 1,
-    name: loginForm.value.username || '校园用户',
-    avatar: '',
-    phone: '',
-    email: '',
-    address: '默认收货地址',
-    token: 'mock-token'
-  })
-  showLogin.value = false
-  ElMessage.success('登录成功')
+const handleLogin = async () => {
+  if (!loginForm.value.username) {
+    ElMessage.warning('请输入账号')
+    return
+  }
+  try {
+    await userStore.login({
+      username: loginForm.value.username,
+      password: loginForm.value.password
+    })
+    showLogin.value = false
+    ElMessage.success('登录成功')
+  } catch {
+    ElMessage.error('登录失败，请检查后端服务')
+  }
 }
 
 const handleCheckout = () => {

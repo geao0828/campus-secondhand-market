@@ -1,7 +1,7 @@
 <template>
   <el-card class="product-card" :body-style="{ padding: '0px' }" shadow="hover" @click="goToDetail">
     <div class="image-container">
-      <img :src="product.image" class="product-image" :alt="product.name" />
+      <img :src="product.image || product.imgUrl || 'https://picsum.photos/200/200?random=card'" class="product-image" :alt="product.name" />
       <el-tag v-if="product.isHot" type="danger" class="hot-tag" size="small">热门</el-tag>
       <el-tag v-if="product.isNew" type="success" class="new-tag" size="small">全新</el-tag>
     </div>

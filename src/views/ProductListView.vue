@@ -65,7 +65,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProductStore } from '../stores/product'
 import ProductCard from '../components/ProductCard.vue'
@@ -74,6 +74,10 @@ import { Search } from '@element-plus/icons-vue'
 const route = useRoute()
 const router = useRouter()
 const productStore = useProductStore()
+
+onMounted(() => {
+  productStore.fetchProducts()
+})
 
 const searchKeyword = ref(route.query.keyword || '')
 const selectedCategory = ref(route.query.category || '')

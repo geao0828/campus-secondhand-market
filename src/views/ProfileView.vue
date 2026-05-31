@@ -4,7 +4,9 @@
       <el-col :xs="24" :md="6">
         <el-card class="side-card">
           <div class="profile-head">
-            <el-avatar :size="72">{{ (userStore.user?.name || 'U')[0] }}</el-avatar>
+            <el-avatar :size="72" :src="userStore.user?.avatar">
+              {{ (userStore.user?.name || 'U')[0] }}
+            </el-avatar>
             <h3>{{ userStore.user?.name || '未登录' }}</h3>
             <p v-if="userStore.isLoggedIn">学号/ID: {{ userStore.user?.id }}</p>
             <el-button v-if="!userStore.isLoggedIn" type="primary" size="small" @click="promptLogin">去登录</el-button>
@@ -94,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, computed } from 'vue'
+import { ref, reactive, watch, computed, onMounted } from 'vue'
 import { useUserStore } from '../stores/user'
 import { useOrderStore } from '../stores/order'
 import ProductCard from '../components/ProductCard.vue'
@@ -106,7 +108,23 @@ import { ElMessage } from 'element-plus'
 const userStore = useUserStore()
 const orderStore = useOrderStore()
 
+onMounted(() => {
+  orderStore.fetchMyProducts()
+  orderStore.fetchOrders()
+  userStore.fetchFavorites()
+})
+
 const activeMenu = ref('info')
+
+watch(activeMenu, (menu) => {
+  if (menu === 'products') {
+    orderStore.fetchMyProducts()
+  } else if (menu === 'orders') {
+    orderStore.fetchOrders()
+  } else if (menu === 'favorites') {
+    userStore.fetchFavorites()
+  }
+})
 const userInfo = reactive({
   name: '',
   phone: '',
@@ -153,13 +171,17 @@ const mapMyProduct = (p) => ({
   seller: { name: '我' }
 })
 
-const saveInfo = () => {
+const saveInfo = async () => {
   if (!userStore.isLoggedIn) {
     ElMessage.warning('请先登录')
     return
   }
-  userStore.updateProfile({ ...userInfo })
-  ElMessage.success('保存成功')
+  try {
+    await userStore.updateProfile({ ...userInfo })
+    ElMessage.success('保存成功')
+  } catch {
+    ElMessage.error('保存失败，请重试')
+  }
 }
 
 const handleLogout = () => {
