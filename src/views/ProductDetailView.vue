@@ -1,0 +1,289 @@
+<template>
+  <div class="detail-page page-content" v-if="product">
+    <el-breadcrumb separator="/">
+      <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+      <el-breadcrumb-item :to="{ path: '/products' }">全部商品</el-breadcrumb-item>
+      <el-breadcrumb-item>{{ product.name }}</el-breadcrumb-item>
+    </el-breadcrumb>
+
+    <el-row :gutter="24" class="top-row">
+      <el-col :xs="24" :md="10">
+        <el-card :body-style="{ padding: 0 }">
+          <el-image :src="currentImage" fit="cover" class="main-image" />
+          <div v-if="product.images?.length > 1" class="thumb-list">
+            <img
+              v-for="(img, i) in product.images"
+              :key="i"
+              :src="img"
+              :class="{ active: currentImage === img }"
+              @click="currentImage = img"
+            />
+          </div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :md="14">
+        <el-card>
+          <h1 class="title">{{ product.name }}</h1>
+          <div class="price-box">
+            <span class="price">¥{{ product.price }}</span>
+            <span class="origin">原价 ¥{{ product.originalPrice }}</span>
+            <el-tag type="danger" effect="plain">{{ discount }}折</el-tag>
+          </div>
+          <el-descriptions :column="1" border class="desc-block">
+            <el-descriptions-item label="商品描述">{{ product.description }}</el-descriptions-item>
+            <el-descriptions-item label="成色">{{ product.condition }}</el-descriptions-item>
+            <el-descriptions-item label="分类">{{ categoryName }}</el-descriptions-item>
+            <el-descriptions-item label="发布时间">{{ product.publishTime }}</el-descriptions-item>
+            <el-descriptions-item label="库存">{{ product.stock }} 件</el-descriptions-item>
+          </el-descriptions>
+          <div class="buy-row">
+            <span>数量</span>
+            <el-input-number v-model="quantity" :min="1" :max="product.stock" />
+          </div>
+          <div class="actions">
+            <el-button type="danger" size="large" @click="handleBuyNow">立即购买</el-button>
+            <el-button type="primary" size="large" :icon="ShoppingCart" @click="handleAddToCart">加入购物车</el-button>
+            <el-button size="large" :icon="Star" :type="isFavorite ? 'warning' : 'default'" @click="handleFavorite">
+              {{ isFavorite ? '已收藏' : '收藏' }}
+            </el-button>
+            <el-button size="large" :icon="ChatDotRound" @click="handleChat">私聊卖家</el-button>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="24" class="bottom-row">
+      <el-col :xs="24" :md="16">
+        <el-card>
+          <template #header>商品详情</template>
+          <p>【物品描述】{{ product.description }}</p>
+          <p>【成色说明】{{ product.condition }}，功能正常，支持校内面交或快递。</p>
+        </el-card>
+        <el-card class="review-section">
+          <template #header>用户评价 ({{ reviews.length }})</template>
+          <div v-for="review in reviews" :key="review.id" class="review-item">
+            <div class="review-head">
+              <el-avatar :size="36">{{ review.userName[0] }}</el-avatar>
+              <div>
+                <strong>{{ review.userName }}</strong>
+                <el-rate :model-value="review.rating" disabled size="small" />
+              </div>
+              <span class="time">{{ review.time }}</span>
+            </div>
+            <p>{{ review.content }}</p>
+          </div>
+          <el-empty v-if="!reviews.length" description="暂无评价" />
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :md="8">
+        <el-card>
+          <template #header>卖家信息</template>
+          <div class="seller">
+            <div class="seller-avatar">
+              <el-avatar :size="56">{{ product.seller?.name?.[0] || 'S' }}</el-avatar>
+              <strong class="seller-name">{{ product.seller?.name }}</strong>
+            </div>
+            <p>已售 {{ product.seller?.soldCount }} 件 · 评分 {{ product.seller?.rating }}</p>
+          </div>
+          <el-button type="primary" plain block :icon="ChatDotRound" @click="handleChat">联系卖家</el-button>
+        </el-card>
+      </el-col>
+    </el-row>
+  </div>
+  <div v-else class="page-content">
+    <el-empty description="商品不存在或已下架" />
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useProductStore } from '../stores/product'
+import { useUserStore } from '../stores/user'
+import { useOrderStore } from '../stores/order'
+
+import { ShoppingCart, Star, ChatDotRound } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const route = useRoute()
+const router = useRouter()
+const productStore = useProductStore()
+const userStore = useUserStore()
+const orderStore = useOrderStore()
+
+const quantity = ref(1)
+const currentImage = ref('')
+
+const product = computed(() => productStore.getProductById(route.params.id))
+const reviews = computed(() => productStore.getReviewsByProductId(route.params.id))
+const isFavorite = computed(() => product.value && userStore.isFavorite(product.value.id))
+const categoryName = computed(() =>
+  productStore.categories.find((c) => c.id === product.value?.category)?.name || ''
+)
+const discount = computed(() => {
+  if (!product.value?.originalPrice) return 10
+  return Math.round((product.value.price / product.value.originalPrice) * 100) / 10
+})
+
+watch(
+  product,
+  (p) => {
+    if (p) currentImage.value = p.images?.[0] || p.image
+  },
+  { immediate: true }
+)
+
+const handleAddToCart = () => {
+  userStore.addToCart(product.value, quantity.value)
+  ElMessage.success('已加入购物车')
+}
+
+const handleBuyNow = () => {
+  orderStore.createOrder({
+    productId: product.value.id,
+    productName: product.value.name,
+    productImage: product.value.image,
+    price: product.value.price,
+    quantity: quantity.value,
+    seller: product.value.seller?.name,
+    address: userStore.user?.address || '请完善收货地址'
+  })
+  ElMessage.success('下单成功，请前往订单页付款')
+  router.push('/orders')
+}
+
+const handleFavorite = () => {
+  if (isFavorite.value) {
+    userStore.removeFavorite(product.value.id)
+    ElMessage.success('已取消收藏')
+  } else {
+    userStore.addFavorite(product.value)
+    ElMessage.success('收藏成功')
+  }
+}
+
+const handleChat = () => {
+  ElMessageBox.alert(`正在与卖家「${product.value.seller?.name}」建立私聊（演示功能，对接 IM 接口即可）`, '私聊卖家')
+}
+</script>
+
+<style scoped>
+.detail-page {
+  padding-top: 16px;
+}
+
+.el-breadcrumb {
+  margin-bottom: 20px;
+}
+
+.top-row {
+  margin-bottom: 24px;
+}
+
+.main-image {
+  width: 100%;
+  height: 360px;
+  display: block;
+}
+
+.thumb-list {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+}
+
+.thumb-list img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.thumb-list img.active {
+  border-color: #409eff;
+}
+
+.title {
+  margin: 0 0 16px;
+  font-size: 22px;
+}
+
+.price-box {
+  background: #fdf6ec;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.price {
+  font-size: 28px;
+  font-weight: bold;
+  color: #f56c6c;
+}
+
+.origin {
+  color: #909399;
+  text-decoration: line-through;
+}
+
+.desc-block {
+  margin-bottom: 20px;
+}
+
+.buy-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.bottom-row .el-card {
+  margin-bottom: 16px;
+}
+
+.review-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.review-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.review-head .time {
+  margin-left: auto;
+  font-size: 12px;
+  color: #909399;
+}
+
+.seller-avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.seller-name {
+  font-size: 16px;
+}
+.seller p {
+  font-size: 13px;
+  color: #909399;
+  margin: 8px 0 16px;
+  text-align: center;
+}
+</style>

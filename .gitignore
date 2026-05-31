@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# 本地上传的图片（保留目录占位）
+public/uploads/**
+!public/uploads/.gitkeep
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
