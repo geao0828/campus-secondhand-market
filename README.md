@@ -4,6 +4,15 @@
 
 ## 技术栈
 
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| Vue 3 | 3.x | 使用组合式API（`<script setup>`） |
+| Vite | 5.x | 构建工具 |
+| Vue Router | 4.x | 路由管理 |
+| Pinia | 2.x | 状态管理 |
+| Element Plus | 2.x | UI框架 |
+| Axios | 1.x | 对接后端API |
+
 ![Vue](https://img.shields.io/badge/Vue-3-42b883?logo=vue.js&style=flat-square)
 ![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&style=flat-square)
 ![Vue Router](https://img.shields.io/badge/Vue%20Router-4-4FC08D?logo=vue&style=flat-square)
@@ -21,6 +30,17 @@
 - **发布功能**：上传商品图片、填写描述、设置价格和分类，支持编辑和下架
 - **订单管理**：查看订单状态（待付款/待发货/已完成）、确认收货、评价商品
 - **个人中心**：管理个人信息、查看我的发布、我的订单、我的收藏
+
+### 功能要求
+
+- **组件封装**：至少2个可复用的自定义组件（ProductCard、ProductForm）
+- **页面路由**：多页面切换（首页、商品列表、商品详情、发布页面、订单管理、个人中心）
+- **状态管理**：跨组件共享数据（用户登录状态、购物车、收藏）
+
+### 代码规范与工程化
+
+- 目录结构清晰（src/views、src/components、src/stores、src/api、src/utils）
+- 代码可读性强，合理注释、变量命名规范
 
 ## 运行指南
 
@@ -43,11 +63,6 @@ pnpm dev
 
 项目运行后访问 http://localhost:5173/
 
-### 构建生产版本
-
-```bash
-pnpm build
-```
 
 ## 功能截图
 
@@ -73,14 +88,13 @@ pnpm build
 
 ```
 src/
-├── api/              # API 接口封装（预留对接后端）
+├── api/              # API 接口封装
+│   └── index.js      # 接口统一出口
 ├── components/       # 可复用组件
 │   ├── AppLayout.vue       # 页面布局组件
-│   ├── ProductCard.vue      # 商品卡片组件
-│   ├── ProductForm.vue      # 商品表单组件
+│   ├── ProductCard.vue      # 商品卡片组件（可复用）
+│   ├── ProductForm.vue      # 商品表单组件（可复用）
 │   └── SideAd.vue           # 侧边广告组件
-├── data/
-│   └── mock.js      # 模拟数据
 ├── router/
 │   └── index.js     # 路由配置
 ├── stores/           # Pinia 状态管理
@@ -92,11 +106,11 @@ src/
 │   └── upload.js     # 图片上传工具
 ├── views/            # 页面视图
 │   ├── HomeView.vue        # 首页
-│   ├── ProductListView.vue # 商品列表
-│   ├── ProductDetailView.vue # 商品详情
-│   ├── PublishView.vue     # 发布商品
-│   ├── OrderView.vue       # 订单管理
-│   └── ProfileView.vue     # 个人中心
+│   ├── ProductListView.vue # 商品列表页
+│   ├── ProductDetailView.vue # 商品详情页
+│   ├── PublishView.vue     # 发布商品页
+│   ├── OrderView.vue       # 订单管理页
+│   └── ProfileView.vue     # 个人中心页
 ├── App.vue           # 根组件
 └── main.js          # 入口文件
 ```
@@ -105,9 +119,8 @@ src/
 
 如需对接真实后端接口，请：
 
-1. 取消 `src/api/index.js` 中的接口注释
-2. 修改 `src/utils/request.js` 中的 `baseURL` 为后端地址
-3. 根据后端接口调整 API 调用参数
+1. 修改 `.env` 文件中的 `VITE_API_BASE_URL` 为后端地址
+2. Vite 开发服务器已配置代理，自动转发 API 请求
 
 ## License
 
