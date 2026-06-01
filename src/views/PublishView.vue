@@ -28,7 +28,6 @@
           <template #default="{ row }">¥{{ row.price }}</template>
         </el-table-column>
         <el-table-column prop="publishTime" label="发布时间" width="120" />
-        <el-table-column prop="views" label="浏览" width="80" />
         <el-table-column label="状态" width="90">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
@@ -38,8 +37,11 @@
         </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button size="small" link type="danger" @click="handleDelist(row)">下架</el-button>
+            <template v-if="row.status === 'active'">
+              <el-button size="small" link type="primary" @click="handleEdit(row)">编辑</el-button>
+              <el-button size="small" link type="danger" @click="handleDelist(row)">下架</el-button>
+            </template>
+            <span v-else class="disabled-hint">已售</span>
           </template>
         </el-table-column>
       </el-table>
@@ -48,7 +50,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { useProductStore } from '../stores/product'
 import { useOrderStore } from '../stores/order'
 import { useUserStore } from '../stores/user'
@@ -58,6 +60,10 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const productStore = useProductStore()
 const orderStore = useOrderStore()
 const userStore = useUserStore()
+
+onMounted(() => {
+  orderStore.fetchMyProducts()
+})
 
 const editingId = ref(null)
 const form = reactive({
@@ -125,6 +131,20 @@ const handleReset = () => {
 
 const handleEdit = (row) => {
   editingId.value = row.id
+  let images = []
+  if (row.images) {
+    if (Array.isArray(row.images)) {
+      images = row.images
+    } else if (typeof row.images === 'string') {
+      try {
+        images = JSON.parse(row.images)
+      } catch {
+        images = [row.image]
+      }
+    }
+  } else {
+    images = [row.image]
+  }
   Object.assign(form, {
     name: row.name,
     category: row.category,
@@ -134,7 +154,7 @@ const handleEdit = (row) => {
     stock: row.stock || 1,
     description: row.description || '',
     image: row.image,
-    images: row.images || [row.image]
+    images: images
   })
 }
 
@@ -171,5 +191,11 @@ const handleDelist = (row) => {
   height: 48px;
   object-fit: cover;
   border-radius: 6px;
+}
+
+.disabled-hint {
+  color: #999;
+  cursor: not-allowed;
+  font-size: 12px;
 }
 </style>

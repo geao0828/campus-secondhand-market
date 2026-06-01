@@ -26,3 +26,11 @@ public/uploads/**
 *.njsproj
 *.sln
 *.sw?
+
+# 忽略环境变量文件
+.env
+.env.local
+.env.*.local
+
+# 保留示例模板（可提交）
+!.env.example

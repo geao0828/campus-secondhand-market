@@ -75,8 +75,9 @@ const route = useRoute()
 const router = useRouter()
 const productStore = useProductStore()
 
-onMounted(() => {
-  productStore.fetchProducts()
+onMounted(async () => {
+  await productStore.fetchProducts()
+  console.log('商品列表页面 - store中的商品:', productStore.products)
 })
 
 const searchKeyword = ref(route.query.keyword || '')
@@ -97,7 +98,7 @@ const syncFromRoute = () => {
 watch(() => route.query, syncFromRoute, { immediate: true })
 
 const filteredProducts = computed(() => {
-  let list = productStore.products.filter((p) => p.status !== 'inactive')
+  let list = productStore.products.filter((p) => p.status === 'active')
 
   if (route.query.sort === 'hot') {
     list = list.filter((p) => p.isHot)

@@ -33,7 +33,7 @@
             <el-descriptions-item label="商品描述">{{ product.description }}</el-descriptions-item>
             <el-descriptions-item label="成色">{{ product.condition }}</el-descriptions-item>
             <el-descriptions-item label="分类">{{ categoryName }}</el-descriptions-item>
-            <el-descriptions-item label="发布时间">{{ product.publishTime }}</el-descriptions-item>
+            <el-descriptions-item label="发布时间">{{ formatPublishTime(product.publishTime) }}</el-descriptions-item>
             <el-descriptions-item label="库存">{{ product.stock }} 件</el-descriptions-item>
           </el-descriptions>
           <div class="buy-row" v-if="!isOwnProduct">
@@ -47,8 +47,13 @@
             </el-button>
           </div>
           <div class="actions" v-else>
-            <el-button type="danger" size="large" @click="handleBuyNow">立即购买</el-button>
-            <el-button type="primary" size="large" :icon="ShoppingCart" @click="handleAddToCart">加入购物车</el-button>
+            <template v-if="product.stock > 0">
+              <el-button type="danger" size="large" @click="handleBuyNow">立即购买</el-button>
+              <el-button type="primary" size="large" :icon="ShoppingCart" @click="handleAddToCart">加入购物车</el-button>
+            </template>
+            <template v-else>
+              <el-button type="danger" size="large" disabled>库存不足</el-button>
+            </template>
             <el-button size="large" :icon="Star" :type="isFavorite ? 'warning' : 'default'" @click="handleFavorite">
               {{ isFavorite ? '已收藏' : '收藏' }}
             </el-button>
@@ -121,19 +126,27 @@ const userStore = useUserStore()
 const orderStore = useOrderStore()
 
 onMounted(async () => {
-  productStore.fetchProducts()
-  productStore.fetchReviews(route.params.id)
+  let currentProduct = null
   try {
     const res = await productAPI.getProductDetail(route.params.id)
-    if (res?.data) {
-      const existing = productStore.getProductById(route.params.id)
+    currentProduct = res.data?.data || res.data
+    if (currentProduct) {
+      const existing = productStore.getProductById(currentProduct.id)
       if (!existing) {
-        productStore.products.unshift(res.data)
+        productStore.products.unshift(currentProduct)
       }
     }
   } catch (e) {
     console.error('获取商品详情失败:', e)
   }
+  await productStore.fetchProducts()
+  if (currentProduct) {
+    const existing = productStore.getProductById(currentProduct.id)
+    if (!existing) {
+      productStore.products.unshift(currentProduct)
+    }
+  }
+  productStore.fetchReviews(route.params.id)
 })
 
 const quantity = ref(1)
@@ -162,6 +175,22 @@ const isOwnProduct = computed(() => {
 const categoryName = computed(() =>
   productStore.categories.find((c) => c.id === product.value?.category)?.name || ''
 )
+const formatPublishTime = (time) => {
+  if (!time) return '未知'
+  const date = new Date(time)
+  if (isNaN(date.getTime())) {
+    if (typeof time === 'string' && time.includes('T')) {
+      return time.replace('T', ' ')
+    }
+    return time
+  }
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}`
+}
 const discount = computed(() => {
   if (!product.value?.originalPrice) return 10
   return Math.round((product.value.price / product.value.originalPrice) * 100) / 10
@@ -206,8 +235,40 @@ const handleFavorite = () => {
   }
 }
 
+const chatResponses = [
+  '您好！商品还在的，需要了解什么细节吗？',
+  '您好~ 这个是自用闲置，成色很新哦',
+  '你好！价格可以小刀，有意私聊~',
+  '在的在的，需要的话可以发更多细节图',
+  '您好，这个商品刚挂不久，还没来得及整理详情',
+  '你好！包邮的，当天可以发货',
+  '在的，请问有什么问题吗？',
+  '您好~ 爽快可刀，欢迎咨询！'
+]
+
 const handleChat = () => {
-  ElMessageBox.alert(`正在与卖家「${product.value.seller?.name}」建立私聊（演示功能，对接 IM 接口即可）`, '私聊卖家')
+  const randomResponse = chatResponses[Math.floor(Math.random() * chatResponses.length)]
+  const userAvatar = userStore.user?.avatar || ''
+  const sellerAvatar = product.value.seller?.avatar || ''
+  
+  const chatContent = `
+<div style="padding: 16px; font-size: 14px;">
+  <div style="display: flex; align-items: flex-start; justify-content: flex-end; margin-bottom: 16px;">
+    <div style="background: #409EFF; color: white; padding: 10px 14px; border-radius: 12px 0 12px 12px; max-width: 280px; word-break: break-all; margin-left: 12px;">你好，这个商品还在吗？</div>
+    <img src="${userAvatar}" alt="我" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #409EFF;" onerror="this.style.display='none';this.previousSibling.style.marginRight='0';this.previousSibling.style.borderRadius='12px';">
+    <div style="width: 36px; height: 36px; border-radius: 50%; background: #409EFF; color: white; display: none; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">${userStore.user?.name?.[0] || '我'}</div>
+  </div>
+  <div style="display: flex; align-items: flex-start;">
+    <img src="${sellerAvatar}" alt="${product.value.seller?.name}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #67C23A;" onerror="this.style.display='none';this.nextSibling.style.display='flex';">
+    <div style="width: 36px; height: 36px; border-radius: 50%; background: #67C23A; color: white; display: none; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">${product.value.seller?.name?.[0] || '卖'}</div>
+    <div style="background: #F5F5F5; padding: 10px 14px; border-radius: 0 12px 12px 12px; max-width: 280px; word-break: break-all; margin-left: 12px;"><strong>${product.value.seller?.name}：</strong>${randomResponse}</div>
+  </div>
+</div>
+  `
+  ElMessageBox.alert(chatContent.trim(), '💬 私聊卖家', {
+    confirmButtonText: '关闭',
+    dangerouslyUseHTMLString: true
+  })
 }
 </script>
 

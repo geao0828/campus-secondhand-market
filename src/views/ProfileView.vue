@@ -77,7 +77,11 @@
             <el-table-column label="金额" width="100">
               <template #default="{ row }">¥{{ row.price * row.quantity }}</template>
             </el-table-column>
-            <el-table-column prop="statusText" label="状态" width="100" />
+            <el-table-column label="状态" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getStatusType(row.status)" size="small">{{ getStatusText(row.status) }}</el-tag>
+            </template>
+          </el-table-column>
           </el-table>
         </el-card>
 
@@ -168,8 +172,21 @@ const mapMyProduct = (p) => ({
   image: p.image,
   description: p.description || '',
   condition: p.condition || '良好',
-  seller: { name: '我' }
+  seller: { name: '我' },
+  publishTime: p.publishTime || p.createdAt,
+  status: p.status || 'active'
 })
+
+const statusMap = {
+  pending: { text: '待付款', type: 'warning' },
+  paid: { text: '待发货', type: 'primary' },
+  shipped: { text: '待收货', type: 'info' },
+  completed: { text: '已完成', type: 'success' },
+  cancelled: { text: '已取消', type: 'danger' }
+}
+
+const getStatusText = (status) => statusMap[status]?.text || status || '未知'
+const getStatusType = (status) => statusMap[status]?.type || 'default'
 
 const saveInfo = async () => {
   if (!userStore.isLoggedIn) {

@@ -63,25 +63,30 @@ export const useOrderStore = defineStore('order', () => {
   const fetchMyProducts = async () => {
     try {
       const res = await userAPI.getMyProducts()
-      myProducts.value = res.data?.list || res.data || []
+      const data = res.data?.list || res.data || []
+      console.log('我的发布API返回数据:', data)
+      myProducts.value = data
     } catch (e) {
       console.error('获取我的发布失败:', e)
       myProducts.value = []
     }
   }
 
-  const addMyProduct = async (data) => {
-    const res = await productAPI.publishProduct(data)
-    if (res.data) {
-      myProducts.value.unshift({
-        id: res.data.id,
-        views: 0,
-        status: 'active',
-        publishTime: new Date().toLocaleDateString(),
-        ...data
-      })
-    }
-    return res
+  const addMyProduct = (data) => {
+    myProducts.value.unshift({
+      id: data.id,
+      name: data.name,
+      price: data.price,
+      category: data.category,
+      condition: data.condition,
+      description: data.description,
+      image: data.image,
+      stock: data.stock,
+      views: 0,
+      status: 'active',
+      publishTime: data.publishTime || data.createdAt || new Date().toISOString(),
+      seller: data.seller
+    })
   }
 
   const updateMyProduct = async (id, data) => {

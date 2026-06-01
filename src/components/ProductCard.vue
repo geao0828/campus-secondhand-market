@@ -4,6 +4,7 @@
       <img :src="product.image || product.imgUrl || 'https://picsum.photos/200/200?random=card'" class="product-image" :alt="product.name" />
       <el-tag v-if="product.isHot" type="danger" class="hot-tag" size="small">热门</el-tag>
       <el-tag v-if="product.isNew" type="success" class="new-tag" size="small">全新</el-tag>
+      <el-tag v-if="statusConfig" :type="statusConfig.type" class="status-tag" size="small">{{ statusConfig.label }}</el-tag>
     </div>
     <div class="card-content">
       <h3 class="product-name">{{ product.name }}</h3>
@@ -13,7 +14,7 @@
       </div>
       <div class="info-row">
         <span class="seller">{{ product.seller?.name || '匿名' }}</span>
-        <span class="time">{{ formatTime(product.publishTime) }}</span>
+        <span class="time">{{ formatTime(product) }}</span>
       </div>
     </div>
   </el-card>
@@ -31,12 +32,26 @@ const props = defineProps({
 
 const router = useRouter()
 
+const statusConfig = (() => {
+  const status = props.product?.status
+  const stock = props.product?.stock || 0
+  if (stock <= 0) return { label: '无货', type: 'danger' }
+  return {
+    active: { label: '在售', type: 'success' },
+    inactive: { label: '下架', type: 'warning' },
+    sold: { label: '已售', type: 'info' }
+  }[status]
+})()
+
 const goToDetail = () => {
   router.push({ name: 'productDetail', params: { id: props.product.id } })
 }
 
-const formatTime = (time) => {
+const formatTime = (product) => {
+  const time = product.publishTime || product.createTime || product.createdAt
+  if (!time) return '未知'
   const date = new Date(time)
+  if (isNaN(date.getTime())) return '未知'
   const month = date.getMonth() + 1
   const day = date.getDate()
   return `${month}月${day}日`
@@ -76,6 +91,12 @@ const formatTime = (time) => {
   position: absolute;
   top: 8px;
   right: 8px;
+}
+
+.status-tag {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
 }
 
 .card-content {

@@ -22,19 +22,41 @@ export const useProductStore = defineStore('product', () => {
   ])
 
   const getProductById = (id) => {
-    const numId = Number(id)
+    const targetId = Number(id)
     return (
-      products.value.find((p) => p.id === numId) ||
-      hotProducts.value.find((p) => p.id === numId) ||
-      newProducts.value.find((p) => p.id === numId)
+      products.value.find((p) => Number(p.id) === targetId) ||
+      hotProducts.value.find((p) => Number(p.id) === targetId) ||
+      newProducts.value.find((p) => Number(p.id) === targetId)
     )
   }
   const getReviewsByProductId = (productId) => reviews.value.filter((r) => r.productId === Number(productId))
 
-  const fetchProducts = async (params) => {
+  const fetchProducts = async (params = {}) => {
     try {
-      const res = await productAPI.getProducts(params)
-      products.value = res.data?.list || res.data || []
+      let allProducts = []
+      let currentPage = 1
+      const pageSize = params.pageSize || 10
+      
+      while (true) {
+        const res = await productAPI.getProducts({
+          ...params,
+          page: currentPage,
+          pageSize: pageSize
+        })
+        const data = res.data?.list || res.data || []
+        console.log(`商品列表API第${currentPage}页响应:`, data.length, '条')
+        
+        if (data.length === 0) break
+        
+        allProducts = [...allProducts, ...data]
+        
+        if (data.length < pageSize) break
+        
+        currentPage++
+      }
+      
+      console.log('解析后的商品数据:', allProducts)
+      products.value = allProducts
     } catch (e) {
       console.error('获取商品列表失败:', e)
       products.value = []
@@ -44,7 +66,8 @@ export const useProductStore = defineStore('product', () => {
   const fetchHotProducts = async () => {
     try {
       const res = await productAPI.getHotProducts()
-      hotProducts.value = res.data?.list || res.data || []
+      const data = res.data?.list || res.data || []
+      hotProducts.value = data.filter((p) => p.status === 'active')
     } catch (e) {
       console.error('获取热门商品失败:', e)
       hotProducts.value = []
@@ -54,7 +77,8 @@ export const useProductStore = defineStore('product', () => {
   const fetchNewProducts = async () => {
     try {
       const res = await productAPI.getNewProducts()
-      newProducts.value = res.data?.list || res.data || []
+      const data = res.data?.list || res.data || []
+      newProducts.value = data.filter((p) => p.status === 'active')
     } catch (e) {
       console.error('获取最新商品失败:', e)
       newProducts.value = []

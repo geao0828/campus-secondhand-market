@@ -28,7 +28,7 @@
               </el-button>
             </div>
             <el-row :gutter="16">
-              <el-col v-for="product in productStore.hotProducts" :key="product.id" :xs="12" :sm="8" :md="6">
+              <el-col v-for="product in productStore.hotProducts.slice(0, 12)" :key="product.id" :xs="12" :sm="6" :md="6">
                 <ProductCard :product="product" />
               </el-col>
             </el-row>
@@ -42,7 +42,7 @@
               </el-button>
             </div>
             <el-row :gutter="16">
-              <el-col v-for="product in productStore.newProducts" :key="product.id" :xs="12" :sm="8" :md="6">
+              <el-col v-for="product in productStore.newProducts.slice(0, 12)" :key="product.id" :xs="12" :sm="6" :md="6">
                 <ProductCard :product="product" />
               </el-col>
             </el-row>
