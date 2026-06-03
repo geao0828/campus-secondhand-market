@@ -51,6 +51,24 @@
 pnpm install
 ```
 
+### 配置环境变量
+
+复制 `.env.example` 文件为 `.env` 并修改配置：
+
+```bash
+cp .env.example .env
+```
+
+编辑 `.env` 文件，设置后端 API 地址：
+
+```env
+# 后端 API 地址（请修改为实际的后端服务器地址）
+VITE_API_BASE_URL=http://localhost:8080
+
+# 后端服务端口
+VITE_BACKEND_PORT=8080
+```
+
 ### 启动开发服务器
 
 ```bash
