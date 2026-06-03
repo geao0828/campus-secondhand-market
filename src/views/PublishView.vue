@@ -170,32 +170,5 @@ const handleDelist = (row) => {
 </script>
 
 <style scoped>
-.publish-page {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.my-list {
-  border-radius: 12px;
-}
-
-.cell-product {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.cell-product img {
-  width: 48px;
-  height: 48px;
-  object-fit: cover;
-  border-radius: 6px;
-}
-
-.disabled-hint {
-  color: #999;
-  cursor: not-allowed;
-  font-size: 12px;
-}
+@import '../styles/PublishView.css';
 </style>

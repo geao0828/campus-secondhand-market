@@ -1,0 +1,32 @@
+/* 商品列表页样式 */
+.list-page {
+  padding-top: 16px;
+}
+
+.filter-card {
+  margin-bottom: 16px;
+  border-radius: 12px;
+}
+
+.filter-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.result-bar {
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.result-bar strong {
+  color: #409eff;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+  padding: 16px 0;
+}
