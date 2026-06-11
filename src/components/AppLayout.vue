@@ -73,6 +73,32 @@
       <template #footer>
         <el-button @click="showLogin = false">取消</el-button>
         <el-button type="primary" @click="handleLogin">登录</el-button>
+        <el-button link type="primary" @click="switchToRegister">去注册</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="showRegister" title="用户注册" width="420px" destroy-on-close>
+      <el-form :model="registerForm" label-width="70px" :rules="registerRules" ref="registerFormRef">
+        <el-form-item label="账号" prop="username">
+          <el-input v-model="registerForm.username" placeholder="请输入学号或用户名（4-20 位）" />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="registerForm.password" type="password" placeholder="请输入密码（6-20 位）" show-password />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input v-model="registerForm.confirmPassword" type="password" placeholder="请再次输入密码" show-password />
+        </el-form-item>
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="registerForm.phone" placeholder="请输入手机号" />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="registerForm.email" placeholder="请输入邮箱地址" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showRegister = false">取消</el-button>
+        <el-button type="primary" @click="handleRegister">注册</el-button>
+        <el-button link type="primary" @click="switchToLogin">去登录</el-button>
       </template>
     </el-dialog>
 
@@ -127,8 +153,72 @@ const orderStore = useOrderStore()
 
 const searchKeyword = ref(route.query.keyword || '')
 const showLogin = ref(false)
+const showRegister = ref(false)
 const showCart = ref(false)
-const loginForm = ref({ username: '校园用户', password: '123456' })
+const loginForm = ref({ username: '', password: '' })
+const registerForm = ref({
+  username: '',
+  password: '',
+  confirmPassword: '',
+  phone: '',
+  email: ''
+})
+const registerFormRef = ref(null)
+
+// 表单验证规则
+const validateUsername = (rule, value, callback) => {
+  if (!value) {
+    callback(new Error('请输入账号'))
+  } else if (value.length < 4 || value.length > 20) {
+    callback(new Error('账号长度必须在 4-20 位之间'))
+  } else {
+    callback()
+  }
+}
+
+const validatePassword = (rule, value, callback) => {
+  if (!value) {
+    callback(new Error('请输入密码'))
+  } else if (value.length < 6 || value.length > 20) {
+    callback(new Error('密码长度必须在 6-20 位之间'))
+  } else {
+    callback()
+  }
+}
+
+const validateConfirmPassword = (rule, value, callback) => {
+  if (!value) {
+    callback(new Error('请再次输入密码'))
+  } else if (value !== registerForm.value.password) {
+    callback(new Error('两次输入的密码不一致'))
+  } else {
+    callback()
+  }
+}
+
+const validatePhone = (rule, value, callback) => {
+  if (value && !/^1[3-9]\d{9}$/.test(value)) {
+    callback(new Error('请输入正确的手机号'))
+  } else {
+    callback()
+  }
+}
+
+const validateEmail = (rule, value, callback) => {
+  if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    callback(new Error('请输入正确的邮箱地址'))
+  } else {
+    callback()
+  }
+}
+
+const registerRules = {
+  username: [{ validator: validateUsername, trigger: 'blur' }],
+  password: [{ validator: validatePassword, trigger: 'blur' }],
+  confirmPassword: [{ validator: validateConfirmPassword, trigger: 'blur' }],
+  phone: [{ validator: validatePhone, trigger: 'blur' }],
+  email: [{ validator: validateEmail, trigger: 'blur' }]
+}
 
 const cartTotal = computed(() =>
   userStore.cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
@@ -165,6 +255,47 @@ const handleLogin = async () => {
   } catch {
     ElMessage.error('登录失败，请检查后端服务')
   }
+}
+
+const switchToRegister = () => {
+  showLogin.value = false
+  showRegister.value = true
+}
+
+const switchToLogin = () => {
+  showRegister.value = false
+  showLogin.value = true
+}
+
+const handleRegister = async () => {
+  if (!registerFormRef.value) return
+  
+  await registerFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    
+    try {
+      await userStore.register({
+        username: registerForm.value.username,
+        name: registerForm.value.username,  // 将用户名同时作为 name 传递
+        password: registerForm.value.password,
+        phone: registerForm.value.phone,
+        email: registerForm.value.email
+      })
+      showRegister.value = false
+      ElMessage.success('注册成功，请登录')
+      showLogin.value = true
+      // 清空注册表单
+      registerForm.value = {
+        username: '',
+        password: '',
+        confirmPassword: '',
+        phone: '',
+        email: ''
+      }
+    } catch (err) {
+      ElMessage.error(err.message || '注册失败，请重试')
+    }
+  })
 }
 
 const handleCheckout = () => {

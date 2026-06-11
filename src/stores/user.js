@@ -71,6 +71,15 @@ export const useUserStore = defineStore('user', () => {
   }
 
   /**
+   * 用户注册
+   * @param {Object} data - 注册信息（username, password, phone, email）
+   */
+  const register = async (data) => {
+    const res = await userAPI.register(data)
+    return res
+  }
+
+  /**
    * 用户登出
    * 清除所有本地存储的用户相关数据
    */
@@ -249,6 +258,7 @@ export const useUserStore = defineStore('user', () => {
     cartCount,
     initFromStorage,
     login,
+    register,
     logout,
     updateProfile,
     fetchFavorites,

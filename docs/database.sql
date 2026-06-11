@@ -1,8 +1,8 @@
 -- 校园二手交易平台 数据库初始化脚本
 -- 数据库名: campus_market
 
--- CREATE DATABASE IF NOT EXISTS campus_market DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
--- USE campus_market;
+CREATE DATABASE IF NOT EXISTS campus_market DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE campus_market;
 
 -- ----------------------------
 -- 1. 用户表
@@ -25,7 +25,7 @@ CREATE TABLE `user` (
 
 -- 插入用户数据
 INSERT INTO `user` (`username`, `password`, `name`, `avatar`, `phone`, `email`, `address`, `rating`, `sold_count`) VALUES
-('20210001', '$2a$10$xJwVxKhC8GjLvT1KjYH.Oe1Y6Z0XqvQZ9X5K3mN2pR5sH8vU7wXy', '张三', 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhang', '13800138001', 'zhangsan@school.edu', '北京理工大学1号宿舍楼201', 4.85, 15),
+('admin', '$10$VzaASfnoiizUIip7wagM6OWekdJWqR.qbnuwRuZI1VnIyIhf.ddN6', '家豪', 'http://localhost:8080/uploads/avatar/1781168491436-5d08975128cf4501aa551c79f0966265.png', '13800138001', 'jiahao@admin.com', '清北大学4号宿舍楼101室', 4.85, 15),
 ('20210002', '$2a$10$xJwVxKhC8GjLvT1KjYH.Oe1Y6Z0XqvQZ9X5K3mN2pR5sH8vU7wXy', '李四', 'https://api.dicebear.com/7.x/avataaars/svg?seed=li', '13800138002', 'lisi@school.edu', '北京理工大学2号宿舍楼305', 4.92, 28),
 ('20210003', '$2a$10$xJwVxKhC8GjLvT1KjYH.Oe1Y6Z0XqvQZ9X5K3mN2pR5sH8vU7wXy', '王五', 'https://api.dicebear.com/7.x/avataaars/svg?seed=wang', '13800138003', 'wangwu@school.edu', '北京理工大学3号宿舍楼108', 4.78, 12),
 ('20210004', '$2a$10$xJwVxKhC8GjLvT1KjYH.Oe1Y6Z0XqvQZ9X5K3mN2pR5sH8vU7wXy', '赵六', 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhao', '13800138004', 'zhaoliu@school.edu', '北京理工大学4号宿舍楼402', 4.65, 8),

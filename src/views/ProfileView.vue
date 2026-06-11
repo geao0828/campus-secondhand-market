@@ -203,6 +203,12 @@ const saveInfo = async () => {
 
 const handleLogout = () => {
   userStore.logout()
+  // 清空个人信息表单
+  userInfo.name = ''
+  userInfo.phone = ''
+  userInfo.email = ''
+  userInfo.address = ''
+  userInfo.avatar = ''
   ElMessage.success('已退出登录')
 }
 
